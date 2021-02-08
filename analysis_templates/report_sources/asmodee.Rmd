@@ -1,0 +1,67 @@
+---
+title: "ASMODEE: example using NHS COVID-19 data"
+author: "Joe Bloggs"
+params:
+  grouped_plot: TRUE
+output:
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 8, fig.height = 6, dpi = 70)
+```
+
+
+
+
+```{r }
+
+library(dplyr)      # for data manipulation
+library(outbreaks)  # for data
+library(trending)   # for trend fitting
+library(trendeval)  # for model selection
+library(incidence2)
+
+# load data
+data(covid19_england_nhscalls_2020)
+
+# define a selection of model in a named list
+models  <- list(
+    simple = lm_model(count ~ day),
+    glm_constant = glm_model(count ~ 1, family = "poisson"),
+    glm_poisson = glm_model(count ~ date, family = "poisson"),
+    glm_poisson_weekday = glm_model(count ~ date + weekday, family = "quasipoisson"),
+    glm_quasipoisson = glm_model(count ~ date, family = "poisson"),
+    glm_quasipoisson_weekday = glm_model(count ~ date + weekday, family = "quasipoisson")
+)
+
+
+
+i <- covid19_england_nhscalls_2020 %>%
+  filter(age != "missing") %>%
+  incidence(date, groups = c(nhs_region, age))
+i
+
+i %>%
+  summary()
+
+i %>%
+  mutate(weekday = weekdays(date),
+         weekday = case_when(
+             weekday %in% c("Saturday", "Sunday") ~ "weekend",
+             TRUE ~ "regular"))
+
+
+i %>%
+  facet_plot(facets = age, fill = nhs_region)
+
+
+res <- i %>%
+  filter(date >= as.Date("2020-08-01")) %>%
+  asmodee(models = models, fixed_k = 7, v = 10)
+
+plot(res, x_axis = "date")
+
+
+```

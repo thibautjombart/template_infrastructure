@@ -1,0 +1,118 @@
+---
+title: "Example report: estimating growth rates"
+author: "Thibaut Jombart"
+output:
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 8, fig.height = 6, dpi = 70)
+```
+
+
+# Data preparation
+
+## Used libraries
+
+```{r }
+
+library(outbreaks)
+library(incidence2)
+library(i2extras)
+library(tidyverse)
+
+```
+
+
+
+## Data import
+
+```{r }
+
+raw_dat <- ebola_sim_clean$linelist %>%
+  tibble()
+raw_dat
+
+```
+
+
+
+
+# Analyses
+
+## Epicurves
+
+
+### Counts
+
+Here we build epicurves with data up to September 2014 from our simulated data:
+
+```{r, echo = FALSE, message = FALSE}
+
+i <- raw_dat %>%
+  filter(date_of_onset < as.Date("2014-09-01")) %>% 
+  incidence(date_of_onset, # date to use
+            groups = hospital, # groups
+            interval = 7,
+            na_as_group = FALSE # don't make a NA group
+            )
+
+summary(i)
+
+plot(i)
+
+```
+
+
+### Stacked plot
+ 
+```{r }
+
+plot(i, fill = hospital,
+     angle = 50,
+     legend = "bottom",
+     title = "Weekly cases by hospital")
+
+```
+
+
+### Facet plot
+
+```{r }
+
+facet_plot(i, ylab = "",
+           title = "Weekly cases by hospital",
+           centre_ticks = TRUE)
+
+```
+
+
+
+## Growth rates
+
+### Incidence models
+
+```{r }
+
+## plot models
+i %>%
+  fit_curve() %>%
+  plot()
+
+```
+
+
+### Growth rates
+
+```{r }
+
+i %>%
+  fit_curve() %>%
+  growth_rate() %>%
+  select(-model) %>%
+  mutate_at(vars(starts_with("r")), ~round(., 3)) %>%
+  mutate_at(vars(starts_with("time")), ~round(., 1)) %>%
+  DT::datatable(rownames = FALSE)
+
+```
