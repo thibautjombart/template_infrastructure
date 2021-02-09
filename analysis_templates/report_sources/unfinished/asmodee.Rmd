@@ -21,7 +21,8 @@ library(dplyr)      # for data manipulation
 library(outbreaks)  # for data
 library(trending)   # for trend fitting
 library(trendeval)  # for model selection
-library(incidence2)
+library(incidence2) # for epicurves
+library(trendbreaker) # for asmodee; only on github
 
 # load data
 data(covid19_england_nhscalls_2020)
